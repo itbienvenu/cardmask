@@ -37,9 +37,9 @@ class CardMasker {
             expiryYear: newCardData.expiryYear,
             status: "ACTIVE",
             type: type,
-            limit_amount: limit,
-            spent_amount: 0,
-            use_cases: useCases,
+            limitAmount: limit,
+            spentAmount: 0,
+            useCases: useCases,
             fundingSourceId: fundingSourceId,
             createdAt: new Date().toISOString()
         };
@@ -56,8 +56,11 @@ class CardMasker {
             case 'AMEX':
                 return generateAmexCardNumber();
             case 'VISA':
-            default:
                 return generateVisaCardNumber();
+            default:
+                // Detect unknown network values and throw/log error
+                console.error(`Unsupported card network: ${network}`);
+                throw new Error(`Unsupported card network: ${network}`);
         }
     }
 
@@ -83,25 +86,30 @@ class CardMasker {
         const foundUser = lookup.user;
         const foundMask = lookup.mask;
 
+        // Missing null-check guard for user/mask
+        if (!foundUser || !foundMask) {
+            return { approved: false, reason: "CARD_NOT_FOUND" };
+        }
+
         // 1. Check Mask Status
         if (foundMask.status !== "ACTIVE") {
             return { approved: false, reason: `CARD_${foundMask.status}`, userId: foundUser.user_id, maskId: foundMask.id };
         }
 
         // 2. Check Virtual Card Limits
-        if (foundMask.spent_amount + amount > foundMask.limit_amount) {
+        if (foundMask.spentAmount + amount > foundMask.limitAmount) {
             return { approved: false, reason: "INSUFFICIENT_LIMIT", userId: foundUser.user_id, maskId: foundMask.id };
         }
 
         // 3. Middle Man Check: Verify Funding Source (Real Bank Account)
         const source = foundUser.funding_sources.find(s => s.id === foundMask.fundingSourceId);
-        if (!source || source.available_balance < amount) {
+        if (!source || source.availableBalance < amount) {
             return { approved: false, reason: "INSUFFICIENT_FUNDS_AT_SOURCE", userId: foundUser.user_id, maskId: foundMask.id };
         }
 
         // 4. Check Merchant Locking
         if (foundMask.type === "MERCHANT_LOCKED") {
-            const isAllowed = foundMask.use_cases.some(u =>
+            const isAllowed = foundMask.useCases.some(u =>
                 merchant.toLowerCase().includes(u.toLowerCase())
             );
             if (!isAllowed) {
@@ -116,6 +124,23 @@ class CardMasker {
      * Finalize and log a transaction
      */
     async processTransaction(maskPan: string, amount: number, merchant: string): Promise<Transaction> {
+        // Validation: reject bad input at the logic boundary too
+        if (!Number.isFinite(amount) || amount <= 0) {
+            const tx: Transaction = {
+                id: uuidv4(),
+                userId: "UNKNOWN",
+                cardId: "UNKNOWN",
+                amount,
+                currency: "RWF",
+                merchant,
+                status: "DECLINED",
+                timestamp: new Date().toISOString(),
+                failureReason: "INVALID_AMOUNT"
+            };
+            await db.logSystemTransaction(tx);
+            return tx;
+        }
+
         const auth = this.authorizePayment(maskPan, amount, merchant);
         const timestamp = new Date().toISOString();
         const txId = uuidv4();
@@ -139,10 +164,20 @@ class CardMasker {
                     const mask = user.mask_cards.find(m => m.id === auth.maskId);
                     const source = user.funding_sources.find(s => s.id === auth.sourceId);
 
-                    if (mask && source && mask.status === "ACTIVE") {
+                    // TOCTOU Protection: Re-validate conditions on freshly-fetched user
+                    if (!mask || mask.status !== "ACTIVE") {
+                        transaction.status = "DECLINED";
+                        transaction.failureReason = "CARD_STATE_CHANGED";
+                    } else if (mask.spentAmount + amount > mask.limitAmount) {
+                        transaction.status = "DECLINED";
+                        transaction.failureReason = "INSUFFICIENT_LIMIT";
+                    } else if (!source || source.availableBalance < amount) {
+                        transaction.status = "DECLINED";
+                        transaction.failureReason = "INSUFFICIENT_FUNDS_AT_SOURCE";
+                    } else {
                         // MIDDLE MAN ACTION: Pull funds from real account, track virtual spending
-                        source.available_balance -= amount;
-                        mask.spent_amount += amount;
+                        source.availableBalance -= amount;
+                        mask.spentAmount += amount;
                         if (mask.type === "ONE_TIME") mask.status = "BLOCKED";
                     }
                 }

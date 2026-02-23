@@ -1,6 +1,8 @@
 :root {
     --bg-dark: #0a0a0c;
     --card-bg: #16161a;
+    --surface-alt: #1e1e24;
+    --surface-darker: #1a1a20;
     --accent: #6366f1;
     --accent-glow: rgba(99, 102, 241, 0.3);
     --text-primary: #f8fafc;
@@ -17,7 +19,7 @@
 }
 
 body {
-    font-family: 'Outfit', sans-serif;
+    font-family: Outfit, sans-serif;
     background-color: var(--bg-dark);
     color: var(--text-primary);
     line-height: 1.6;
@@ -98,7 +100,7 @@ nav button.active {
 
 .user-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .user-info h3 {
@@ -113,7 +115,7 @@ nav button.active {
 }
 
 .balance-box {
-    background: #1e1e24;
+    background: var(--surface-alt);
     padding: 1rem;
     border-radius: 0.75rem;
     margin-bottom: 1.5rem;
@@ -140,7 +142,7 @@ nav button.active {
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem;
-    background: #1a1a20;
+    background: var(--surface-darker);
     border-radius: 0.5rem;
     margin-bottom: 0.5rem;
     font-family: monospace;
@@ -152,8 +154,13 @@ nav button.active {
     border-radius: 50%;
 }
 
-.status.active { background: var(--success); }
-.status.blocked { background: var(--danger); }
+.status.active {
+    background: var(--success);
+}
+
+.status.blocked {
+    background: var(--danger);
+}
 
 /* Buttons */
 .btn-primary {
@@ -187,6 +194,13 @@ nav button.active {
     font-size: 0.7rem;
 }
 
+.btn-primary:disabled {
+    background: #3f3f46;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
 /* Modals */
 .modal {
     position: fixed;
@@ -194,7 +208,7 @@ nav button.active {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -221,7 +235,8 @@ form {
     gap: 1rem;
 }
 
-input, select {
+input,
+select {
     background: #0a0a0c;
     border: 1px solid var(--border);
     padding: 0.75rem;
@@ -243,7 +258,9 @@ input, select {
     margin-top: 1rem;
 }
 
-.hidden { display: none; }
+.hidden {
+    display: none;
+}
 
 /* Table */
 .table-container {
@@ -258,7 +275,8 @@ table {
     border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
     padding: 1rem 1.5rem;
     text-align: left;
     border-bottom: 1px solid var(--border);
@@ -277,5 +295,31 @@ th {
     font-weight: 600;
 }
 
-.status-badge.success { background: rgba(34, 197, 94, 0.1); color: var(--success); }
-.status-badge.declined { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+.status-badge.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.status-badge.declined {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.error-banner {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    margin: 0 2rem;
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* Inert and Focus Trap helpers */
+[inert] {
+    pointer-events: none;
+    cursor: default;
+    user-select: none;
+}

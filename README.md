@@ -18,13 +18,20 @@ the start command, to test the core app logic simulation
 
 CURRENT STATUS
 
-![MVP Status](assets/in_mvp.png)
 
 
-TO START THE DEVLOPMENT SERVER
+## TO START THE DEVELOPMENT SERVER
 
 ``` npm run dev ```
 
 then to open the live web view for demo testing 
 
 ``` http://localhost:3000/index.html ```
+
+
+for error checking run
+
+``` npx tsc --noEmit ```
+
+
+![MVP Status](assets/in_mvp.png)

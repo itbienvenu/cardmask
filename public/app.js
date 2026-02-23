@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = '/api';
 
 // Elements
 const usersList = document.getElementById('users-list');
@@ -7,16 +7,117 @@ const viewUsersBtn = document.getElementById('view-users-btn');
 const viewLogsBtn = document.getElementById('view-logs-btn');
 const dashboard = document.getElementById('dashboard');
 const logs = document.getElementById('logs');
+const errorBanner = document.getElementById('error-banner');
+const mainContent = document.getElementById('main-content');
 
 // Modals
 const regModal = document.getElementById('register-modal');
 const maskModal = document.getElementById('mask-modal');
 const payModal = document.getElementById('pay-modal');
+const allModals = [regModal, maskModal, payModal];
 
 // Forms
 const regForm = document.getElementById('register-form');
 const maskForm = document.getElementById('mask-form');
 const payForm = document.getElementById('pay-form');
+
+// State for focus trap
+let lastFocusedElement = null;
+
+// Helper to escape HTML and prevent XSS
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function showError(message) {
+    if (errorBanner) {
+        errorBanner.textContent = message;
+        errorBanner.classList.remove('hidden');
+        errorBanner.setAttribute('aria-hidden', 'false');
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            errorBanner.classList.add('hidden');
+            errorBanner.setAttribute('aria-hidden', 'true');
+        }, 5000);
+    }
+}
+
+// Modal Toggle Logic with Accessibility
+function openModal(modal) {
+    lastFocusedElement = document.activeElement;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    mainContent.setAttribute('aria-hidden', 'true');
+    mainContent.setAttribute('inert', '');
+
+    // Focus first focusable element
+    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (firstFocusable) firstFocusable.focus();
+
+    // Trap focus
+    modal.addEventListener('keydown', trapFocus);
+}
+
+function closeModal(modal) {
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    mainContent.removeAttribute('aria-hidden');
+    mainContent.removeAttribute('inert');
+    modal.removeEventListener('keydown', trapFocus);
+
+    if (lastFocusedElement) {
+        lastFocusedElement.focus();
+    }
+}
+
+function trapFocus(e) {
+    if (e.key === 'Escape') {
+        closeModal(e.currentTarget);
+        return;
+    }
+    if (e.key !== 'Tab') return;
+
+    const modal = e.currentTarget;
+    const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey) { // Shift + Tab
+        if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+        }
+    } else { // Tab
+        if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+        }
+    }
+}
+
+// Global Modal Controls
+document.getElementById('open-register-modal').addEventListener('click', () => {
+    openModal(regModal);
+});
+
+document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        closeModal(e.target.closest('.modal'));
+    });
+});
+
+// Close modals on background click
+allModals.forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal);
+    });
+});
 
 // Toggle Views
 viewUsersBtn.addEventListener('click', () => {
@@ -35,82 +136,142 @@ viewLogsBtn.addEventListener('click', () => {
     fetchLogs();
 });
 
-// Modal Controls
-document.getElementById('open-register-modal').addEventListener('click', () => {
-    regModal.classList.remove('hidden');
-});
-
-document.querySelectorAll('.close-modal').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
-    });
-});
-
 // Fetch Data
 async function fetchUsers() {
-    const res = await fetch(`${API_URL}/users`);
-    const users = await res.json();
-    renderUsers(users);
+    try {
+        const res = await fetch(`${API_URL}/users`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const users = await res.json();
+        renderUsers(users);
+    } catch (error) {
+        console.error('Fetch users error:', error);
+        showError('Failed to load accounts. Please check your connection.');
+        usersList.innerHTML = '<div class="error">Unable to load accounts right now.</div>';
+    }
 }
 
 async function fetchLogs() {
-    const res = await fetch(`${API_URL}/logs`);
-    const data = await res.json();
-    renderLogs(data.reverse());
+    try {
+        const res = await fetch(`${API_URL}/logs`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        renderLogs(data.reverse());
+    } catch (error) {
+        console.error('Fetch logs error:', error);
+        showError('Failed to load activity logs.');
+        renderLogs([]);
+    }
 }
 
 function renderUsers(users) {
-    usersList.innerHTML = users.map(user => {
-        // Find the primary funding source for display
-        const primarySource = user.funding_sources[0] || { last4: '----', available_balance: 0 };
+    if (!users || users.length === 0) {
+        usersList.innerHTML = '<div class="loading">No accounts found. Register one to get started!</div>';
+        return;
+    }
 
-        return `
-            <div class="user-card">
-                <div class="user-info">
-                    <h3>${user.names}</h3>
-                    <p>${user.email}</p>
-                    <div style="font-size: 0.75rem; color: var(--accent); margin-top: 0.5rem;">
-                        🔗 Linked Source: ${primarySource.network} **** ${primarySource.last4}
-                    </div>
-                </div>
-                <div class="balance-box">
-                    <span>Available Funds (at Source)</span>
-                    <div class="amount">${primarySource.available_balance.toLocaleString()} RWF</div>
-                </div>
-                
-                <div class="mask-cards-list">
-                    <label style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">ACTIVE SUBSCRIPTION SHIELDS</label>
-                    ${user.mask_cards.map(mask => `
-                        <div class="mask-item">
-                            <div>
-                                <span class="status ${mask.status.toLowerCase()}"></span>
-                                <span title="${mask.type}">${mask.pan.replace(/(.{4})/g, '$1 ')}</span>
-                            </div>
-                            <button class="btn-primary btn-tiny" onclick="openPayModal('${mask.pan}')">Pay</button>
-                        </div>
-                    `).join('')}
-                    ${user.mask_cards.length === 0 ? '<p style="color:var(--text-secondary);font-size:0.8rem">No subscription shields active.</p>' : ''}
-                </div>
+    usersList.innerHTML = '';
+    users.forEach(user => {
+        const primarySource = (user.funding_sources && user.funding_sources.length > 0)
+            ? user.funding_sources[0]
+            : { id: '', last4: '----', availableBalance: 0, network: 'UNKNOWN' };
 
-                <button class="btn-secondary" onclick="openMaskModal('${user.user_id}', '${primarySource.id}')" style="width:100%">+ New Subscription Guard</button>
+        const cardElement = document.createElement('div');
+        cardElement.className = 'user-card';
+
+        const content = `
+            <div class="user-info">
+                <h3>${escapeHTML(user.names)}</h3>
+                <p>${escapeHTML(user.email)}</p>
+                <div style="font-size: 0.75rem; color: var(--accent); margin-top: 0.5rem;">
+                    🔗 Linked Source: ${escapeHTML(primarySource.network)} **** ${escapeHTML(primarySource.last4)}
+                </div>
             </div>
+            <div class="balance-box">
+                <span>Available Funds (at Source)</span>
+                <div class="amount">${primarySource.availableBalance.toLocaleString()} RWF</div>
+            </div>
+            
+            <div class="mask-cards-list">
+                <label style="font-size: 0.7rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">ACTIVE SUBSCRIPTION SHIELDS</label>
+                <div id="masks-${user.user_id}"></div>
+            </div>
+
+            <button class="btn-secondary" id="add-mask-${user.user_id}" style="width:100%">+ New Subscription Guard</button>
         `;
-    }).join('');
+
+        cardElement.innerHTML = content;
+        usersList.appendChild(cardElement);
+
+        // Inject Masks
+        const masksContainer = document.getElementById(`masks-${user.user_id}`);
+        if (user.mask_cards.length === 0) {
+            masksContainer.innerHTML = '<p style="color:var(--text-secondary);font-size:0.8rem">No subscription shields active.</p>';
+        } else {
+            user.mask_cards.forEach(mask => {
+                const maskItem = document.createElement('div');
+                maskItem.className = 'mask-item';
+
+                const maskInfo = document.createElement('div');
+                const statusDot = document.createElement('span');
+                statusDot.className = `status ${mask.status.toLowerCase()}`;
+
+                const panText = document.createElement('span');
+                panText.title = mask.type;
+                panText.textContent = mask.pan.replace(/(.{4})/g, '$1 ');
+
+                maskInfo.appendChild(statusDot);
+                maskInfo.appendChild(panText);
+
+                const payBtn = document.createElement('button');
+                payBtn.className = 'btn-primary btn-tiny';
+                payBtn.textContent = 'Pay';
+
+                if (mask.status === 'ACTIVE') {
+                    payBtn.onclick = () => openPayModal(mask.pan);
+                } else {
+                    payBtn.disabled = true;
+                    payBtn.title = "Payments can only be initiated for ACTIVE shields";
+                }
+
+                maskItem.appendChild(maskInfo);
+                maskItem.appendChild(payBtn);
+                masksContainer.appendChild(maskItem);
+            });
+        }
+
+        // Action Button
+        document.getElementById(`add-mask-${user.user_id}`).onclick = () => {
+            if (!primarySource.id) {
+                showError('User has no valid funding source linked.');
+                return;
+            }
+            openMaskModalInternal(user.user_id, primarySource.id);
+        };
+    });
 }
 
 function renderLogs(logs) {
-    logsBody.innerHTML = logs.map(log => `
-        <tr>
+    logsBody.innerHTML = '';
+    if (logs.length === 0) {
+        logsBody.innerHTML = '<tr><td colspan="5" style="text-align:center">No transactions found.</td></tr>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
             <td>${new Date(log.timestamp).toLocaleTimeString()}</td>
-            <td>${log.merchant}</td>
+            <td>${escapeHTML(log.merchant)}</td>
             <td>${log.amount.toLocaleString()} RWF</td>
-            <td><span class="status-badge ${log.status.toLowerCase()}">${log.status}</span></td>
-            <td style="color:var(--text-secondary); font-size: 0.8rem">${log.failureReason || '-'}</td>
-        </tr>
-    `).join('');
+            <td><span class="status-badge ${log.status.toLowerCase()}">${escapeHTML(log.status)}</span></td>
+            <td style="color:var(--text-secondary); font-size: 0.8rem">${escapeHTML(log.failureReason) || '-'}</td>
+        `;
+        logsBody.appendChild(row);
+    });
 }
 
-// Actions
+// Action Handlers
 regForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = {
@@ -121,22 +282,31 @@ regForm.addEventListener('submit', async (e) => {
         network: document.getElementById('reg-network').value
     };
 
-    await fetch(`${API_URL}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
+    try {
+        const res = await fetch(`${API_URL}/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
 
-    regModal.classList.add('hidden');
-    regForm.reset();
-    fetchUsers();
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Registration failed');
+        }
+
+        closeModal(regModal);
+        regForm.reset();
+        fetchUsers();
+    } catch (error) {
+        showError(error.message);
+    }
 });
 
-window.openMaskModal = (userId, sourceId) => {
+function openMaskModalInternal(userId, sourceId) {
     document.getElementById('mask-user-id').value = userId;
-    document.getElementById('mask-orig-last4').value = sourceId; // Repurposing field for sourceId
-    maskModal.classList.remove('hidden');
-};
+    document.getElementById('mask-funding-source-id').value = sourceId;
+    openModal(maskModal);
+}
 
 document.getElementById('mask-type').addEventListener('change', (e) => {
     const field = document.getElementById('merchant-locking-field');
@@ -152,7 +322,7 @@ maskForm.addEventListener('submit', async (e) => {
     const userId = document.getElementById('mask-user-id').value;
     const type = document.getElementById('mask-type').value;
     const limit = document.getElementById('mask-limit').value;
-    const fundingSourceId = document.getElementById('mask-orig-last4').value;
+    const fundingSourceId = document.getElementById('mask-funding-source-id').value;
     const merchant = document.getElementById('mask-merchant').value;
 
     const data = {
@@ -162,21 +332,30 @@ maskForm.addEventListener('submit', async (e) => {
         useCases: type === 'MERCHANT_LOCKED' ? [merchant] : ['general']
     };
 
-    await fetch(`${API_URL}/users/${userId}/mask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
+    try {
+        const res = await fetch(`${API_URL}/users/${userId}/mask`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
 
-    maskModal.classList.add('hidden');
-    maskForm.reset();
-    fetchUsers();
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Failed to create shield');
+        }
+
+        closeModal(maskModal);
+        maskForm.reset();
+        fetchUsers();
+    } catch (error) {
+        showError(error.message);
+    }
 });
 
-window.openPayModal = (pan) => {
+function openPayModal(pan) {
     document.getElementById('pay-pan').value = pan;
-    payModal.classList.remove('hidden');
-};
+    openModal(payModal);
+}
 
 payForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -186,23 +365,32 @@ payForm.addEventListener('submit', async (e) => {
         amount: document.getElementById('pay-amount').value
     };
 
-    const res = await fetch(`${API_URL}/pay`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
+    try {
+        const res = await fetch(`${API_URL}/pay`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
 
-    const result = await res.json();
-    payModal.classList.add('hidden');
-    payForm.reset();
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Connection error');
+        }
 
-    if (result.status === 'SUCCESS') {
-        alert('Payment Approved ✅ - Funds pulled from linked source.');
-    } else {
-        alert(`Payment Declined: ${result.failureReason} ❌`);
+        const result = await res.json();
+        closeModal(payModal);
+        payForm.reset();
+
+        if (result.status === 'SUCCESS') {
+            alert('Payment Approved ✅ - Funds pulled from linked source.');
+        } else {
+            alert(`Payment Declined: ${result.failureReason} ❌`);
+        }
+
+        fetchUsers();
+    } catch (error) {
+        showError(error.message);
     }
-
-    fetchUsers();
 });
 
 // Initial Load

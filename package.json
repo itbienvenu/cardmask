@@ -12,11 +12,10 @@
   "main": "server.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx tsx api.ts",
-    "simulate": "npx tsx server.ts"
+    "dev": "tsx api.ts",
+    "simulate": "tsx server.ts"
   },
   "devDependencies": {
-    "@types/body-parser": "^1.19.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.0",
@@ -24,7 +23,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "body-parser": "^2.2.2",
     "card-validator": "^10.0.4",
     "cors": "^2.8.6",
     "credit-card-type": "^10.1.2",

@@ -1,4 +1,0 @@
-Security as a Service
-
-Businesses have many subscriptions (SaaS tools); 
-they can use your tool to ensure no employee spends more than the "Limit" on a specific tool.

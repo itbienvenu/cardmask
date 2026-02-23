@@ -16,7 +16,7 @@ async function runSimulation() {
             id: uuidv4(),
             last4: "8899",
             network: "VISA",
-            available_balance: 500000,
+            availableBalance: 500000,
             status: "LINKED"
         };
 
@@ -31,17 +31,19 @@ async function runSimulation() {
             transactions: []
         };
         await db.addUser(user);
-        // SECURE STORE: Storing sensitive token separately
         await db.storeVaultToken(user.user_id, "tok_visa_vault_secure");
         console.log("SUCCESS: Professional Account Provisioned for:", user.names);
     }
 
-    // Safety check for simulation flow
-    if (!user) return;
+    if (!user || user.funding_sources.length === 0) {
+        console.error("Simulation Error: User has no funding sources.");
+        return;
+    }
 
-    const sourceId = user.funding_sources[0].id;
+    const firstSource = user.funding_sources[0];
+    if (!firstSource) return;
+    const sourceId = firstSource.id;
 
-    // 2. Business Use Case: Multi-Network Strategic Masks
     console.log("\n--- PROVISIONING SUBSCRIPTION SHIELDS ---");
     const netflixMask = await cardsMask.maskUserCard(
         user.user_id,

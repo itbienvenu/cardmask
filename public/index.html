@@ -1,20 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CardMask | Premium Fintech Simulation</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- Outfit Webfont -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <div class="app-container">
+    <div class="app-container" id="main-content">
         <header>
             <div class="logo">
                 <span class="icon">🛡️</span>
                 <h1>Card<span>Mask</span></h1>
             </div>
-            <nav>
+            <div id="error-banner" class="error-banner hidden" role="alert"></div>
+            <nav role="navigation">
                 <button id="view-users-btn" class="active">Dashboard</button>
                 <button id="view-logs-btn">Audit Logs</button>
             </nav>
@@ -26,9 +32,8 @@
                     <h2>Accounts</h2>
                     <button class="btn-primary" id="open-register-modal">Register User</button>
                 </div>
-                
+
                 <div id="users-list" class="grid-container">
-                    <!-- Users will be injected here -->
                     <div class="loading">Loading accounts...</div>
                 </div>
             </section>
@@ -55,16 +60,16 @@
         </main>
 
         <!-- Modals -->
-        <div id="register-modal" class="modal hidden">
+        <div id="register-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reg-title">
             <div class="modal-content">
-                <h3>Register New User</h3>
+                <h3 id="reg-title">Register New User</h3>
                 <form id="register-form">
                     <input type="text" id="reg-name" placeholder="Full Name" required>
                     <input type="email" id="reg-email" placeholder="Email Address" required>
                     <input type="text" id="reg-phone" placeholder="Phone Number">
                     <div class="form-row">
                         <input type="text" id="reg-card" placeholder="Last 4 Digits" maxlength="4" required>
-                        <select id="reg-network">
+                        <select id="reg-network" aria-label="Card Network">
                             <option value="VISA">VISA</option>
                             <option value="MASTERCARD">MASTERCARD</option>
                             <option value="AMEX">AMEX</option>
@@ -78,25 +83,25 @@
             </div>
         </div>
 
-        <div id="mask-modal" class="modal hidden">
+        <div id="mask-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="mask-title">
             <div class="modal-content">
-                <h3>Create Virtual Card</h3>
+                <h3 id="mask-title">Create Virtual Card</h3>
                 <form id="mask-form">
                     <input type="hidden" id="mask-user-id">
-                    <input type="hidden" id="mask-orig-last4">
-                    
-                    <label>Card Type</label>
+                    <input type="hidden" id="mask-funding-source-id" name="mask-funding-source-id">
+
+                    <label for="mask-type">Card Type</label>
                     <select id="mask-type">
                         <option value="ONE_TIME">One-Time (Disposable)</option>
                         <option value="RECURRING">Recurring (Monthly)</option>
                         <option value="MERCHANT_LOCKED">Merchant Locked</option>
                     </select>
 
-                    <label>Spend Limit (RWF)</label>
+                    <label for="mask-limit">Spend Limit (RWF)</label>
                     <input type="number" id="mask-limit" value="10000" required>
 
                     <div id="merchant-locking-field" class="hidden">
-                        <label>Allowed Merchant</label>
+                        <label for="mask-merchant">Allowed Merchant</label>
                         <input type="text" id="mask-merchant" placeholder="e.g. Netflix, Amazon">
                     </div>
 
@@ -108,13 +113,14 @@
             </div>
         </div>
 
-        <div id="pay-modal" class="modal hidden">
+        <div id="pay-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pay-title">
             <div class="modal-content">
-                <h3>Simulate Transaction</h3>
+                <h3 id="pay-title">Simulate Transaction</h3>
                 <form id="pay-form">
-                    <input type="text" id="pay-pan" placeholder="Virtual Card Number" readonly>
-                    <input type="text" id="pay-merchant" placeholder="Merchant Name" required>
-                    <input type="number" id="pay-amount" placeholder="Amount (RWF)" required>
+                    <input type="text" id="pay-pan" placeholder="Virtual Card Number" readonly aria-label="Card Number">
+                    <input type="text" id="pay-merchant" placeholder="Merchant Name" required
+                        aria-label="Merchant Name">
+                    <input type="number" id="pay-amount" placeholder="Amount (RWF)" required aria-label="Amount">
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary close-modal">Cancel</button>
                         <button type="submit" class="btn-primary">Confirm Payment</button>
@@ -125,4 +131,5 @@
     </div>
     <script src="app.js"></script>
 </body>
+
 </html>
