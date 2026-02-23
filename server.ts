@@ -1,7 +1,7 @@
 import CardMasker from "./CONTROLERS/CardMasker.js";
 import db from "./utils/database.js";
 import { v4 as uuidv4 } from "uuid";
-import type { User, Transaction } from "./type.js";
+import type { User, Transaction, FundingSource } from "./type.js";
 
 const cardsMask = new CardMasker();
 
@@ -12,15 +12,21 @@ async function runSimulation() {
     let user = db.getUser(DEMO_USER_ID);
 
     if (!user) {
+        const initialSource: FundingSource = {
+            id: uuidv4(),
+            last4: "8899",
+            network: "VISA",
+            available_balance: 500000,
+            status: "LINKED"
+        };
+
         user = {
             user_id: DEMO_USER_ID,
             names: "Prosper Nkurunziza",
             phone: "+250788000111",
             email: "prosper@fintech.rw",
             address: "KN 3 Rd, Kigali",
-            original_card_last4: "8899",
-            original_card_network: "VISA",
-            total_balance: 500000, // RWF
+            funding_sources: [initialSource],
             mask_cards: [],
             transactions: []
         };
@@ -33,13 +39,15 @@ async function runSimulation() {
     // Safety check for simulation flow
     if (!user) return;
 
+    const sourceId = user.funding_sources[0].id;
+
     // 2. Business Use Case: Multi-Network Strategic Masks
-    console.log("\n--- PROVISIONING MULTI-NETWORK MASKS ---");
+    console.log("\n--- PROVISIONING SUBSCRIPTION SHIELDS ---");
     const netflixMask = await cardsMask.maskUserCard(
         user.user_id,
         "MERCHANT_LOCKED",
         15000,
-        "8899",
+        sourceId,
         ["Netflix"]
     );
 
@@ -47,7 +55,7 @@ async function runSimulation() {
         user.user_id,
         "RECURRING",
         100000,
-        "8899",
+        sourceId,
         ["Travel", "AirRwanda"],
         "AMEX"
     );
