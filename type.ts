@@ -45,8 +45,9 @@ export type User = {
     phone: string; // Changed to string for international formats
     email: string;
     address: string;
-    original_card_last4: string; // Security: only store last 4 of original
-    original_card_full_vault_token: string; // Simulation of a secure token
+    original_card_last4: string;
+    original_card_network: MOCK_CARD_PROVIDER;
+    original_card_full_vault_token: string;
     total_balance: number;
     mask_cards: MaskCard[];
     transactions: Transaction[];

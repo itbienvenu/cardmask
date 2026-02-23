@@ -9,7 +9,7 @@
 import { generateAmexCardNumber } from "../PROVIDERS/amex.js";
 import { generateMasterCardNumber } from "../PROVIDERS/mastercard.js";
 import { generateVisaCardNumber } from "../PROVIDERS/visa.js";
-import type { CardResponse, User, MaskCard, MaskType, Transaction, TransactionStatus } from "../type.js";
+import type { CardResponse, User, MaskCard, MaskType, Transaction, TransactionStatus, MOCK_CARD_PROVIDER } from "../type.js";
 import cardValidator from "card-validator";
 import db from "../utils/database.js";
 import { v4 as uuidv4 } from "uuid";
@@ -21,18 +21,20 @@ class CardMasker {
         type: MaskType,
         limit: number,
         originalCardLast4: string,
-        useCases: string[] = ["general"]
+        useCases: string[] = ["general"],
+        network?: MOCK_CARD_PROVIDER
     ): MaskCard | null {
         const user = db.getUser(user_id);
         if (!user) return null;
 
-        // Verify the user owns this card type (Simulation)
         if (user.original_card_last4 !== originalCardLast4) {
             console.error("Security Alert: User attempted to mask a card they don't own.");
             return null;
         }
 
-        let newCardData: CardResponse = generateVisaCardNumber(); // Default
+        // Use requested network, or fall back to user's original card network
+        const targetNetwork = network || user.original_card_network;
+        const newCardData: CardResponse = this.generateCardByNetwork(targetNetwork);
 
         const mask: MaskCard = {
             id: uuidv4(),
@@ -51,6 +53,18 @@ class CardMasker {
         user.mask_cards.push(mask);
         db.updateUser(user_id, user);
         return mask;
+    }
+
+    private generateCardByNetwork(network: MOCK_CARD_PROVIDER): CardResponse {
+        switch (network) {
+            case 'MASTERCARD':
+                return generateMasterCardNumber();
+            case 'AMEX':
+                return generateAmexCardNumber();
+            case 'VISA':
+            default:
+                return generateVisaCardNumber();
+        }
     }
 
     /**
@@ -121,6 +135,9 @@ class CardMasker {
             timestamp,
             failureReason: auth.reason ?? null
         };
+
+        // Global System Audit
+        db.logSystemTransaction(transaction);
 
         if (auth.userId) {
             const user = db.getUser(auth.userId);

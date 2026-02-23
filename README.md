@@ -7,6 +7,15 @@ installation
 
 
 
+intall npm packages
+
+``` npm install ```
+
+
 the start command
 
 ``` npx tsx server.ts --watch ```
+
+CURRENT STATUS
+
+![MVP Status](assets/in_mvp.png)

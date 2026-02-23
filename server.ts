@@ -15,7 +15,8 @@ if (!user) {
         email: "prosper@fintech.rw",
         address: "KN 3 Rd, Kigali",
         original_card_last4: "8899",
-        original_card_full_vault_token: "tok_visa_vault", // Simulation of secure storage
+        original_card_network: "VISA",
+        original_card_full_vault_token: "tok_visa_vault_secure", // Simulation
         total_balance: 500000, // RWF
         mask_cards: [],
         transactions: []
@@ -25,8 +26,8 @@ if (!user) {
     console.log("SUCCESS: Professional Account Provisioned for:", user.names);
 }
 
-// 2. Business Use Case: Generating Strategic Masks
-console.log("\n--- PROVISIONING STRATEGIC MASKS ---");
+// 2. Business Use Case: Multi-Network Strategic Masks
+console.log("\n--- PROVISIONING MULTI-NETWORK MASKS ---");
 const netflixMask = cardsMask.maskUserCard(
     user.user_id,
     "MERCHANT_LOCKED",
@@ -35,50 +36,45 @@ const netflixMask = cardsMask.maskUserCard(
     ["Netflix"]
 );
 
-const shadyStoreMask = cardsMask.maskUserCard(
+const amexTravelMask = cardsMask.maskUserCard(
     user.user_id,
-    "ONE_TIME",
-    5000,
+    "RECURRING",
+    100000,
     "8899",
-    ["ShadyStore"]
+    ["Travel", "AirRwanda"],
+    "AMEX"
 );
 
-if (netflixMask) {
-    console.log(`[SUBSCRIPTION MASK] Created for Netflix: ${netflixMask.pan} (Limit: ${netflixMask.limit_amount} RWF)`);
-}
+if (netflixMask) console.log(`[VISA MASK] Netflix: ${netflixMask.pan}`);
+if (amexTravelMask) console.log(`[AMEX MASK] Travel: ${amexTravelMask.pan}`);
 
-// 3. Simulation: Processing Transactions
+// 3. Transactions & Audit
 console.log("\n--- PROCESSING REAL-TIME TRANSACTIONS ---");
 
 if (netflixMask) {
-    // Attempting a valid Netflix payment
-    const tx1 = cardsMask.processTransaction(netflixMask.pan, 12000, "Netflix.com / Dublin");
-    console.log(`[TXN ${tx1.status}] ${tx1.amount} RWF at ${tx1.merchant}`);
-
-    // Attempting an unauthorized merchant with the same locked card
-    const tx2 = cardsMask.processTransaction(netflixMask.pan, 500, "Unknown_Hacker_Store");
-    console.log(`[TXN ${tx2.status}] 500 RWF at ${tx2.merchant} (Reason: ${tx2.failureReason})`);
+    cardsMask.processTransaction(netflixMask.pan, 12000, "Netflix.com");
 }
 
-if (shadyStoreMask) {
-    // Valid one-time use
-    const tx3 = cardsMask.processTransaction(shadyStoreMask.pan, 2000, "ShadyStore.com");
-    console.log(`[TXN ${tx3.status}] 2000 RWF at ${tx3.merchant}`);
+// 4. Unknown Card Audit Demo
+console.log("\n--- SYSTEM AUDIT: UNKNOWN CARD ATTEMPT ---");
+cardsMask.processTransaction("4111222233334444", 50000, "DarkWeb_Store");
 
-    // Second attempt on the ONE_TIME card (should fail as it's now BLOCKED)
-    const tx4 = cardsMask.processTransaction(shadyStoreMask.pan, 1000, "ShadyStore.com");
-    console.log(`[TXN ${tx4.status}] 1000 RWF attempt (Reason: ${tx4.failureReason})`);
-}
-
-// 4. Audit Trail Summary
-console.log("\n--- BUSINESS AUDIT TRAIL ---");
+// 5. Audit Summaries
+console.log("\n--- USER TRANSACTION HISTORY ---");
 const finalizedUser = db.getUser(user.user_id);
 if (finalizedUser) {
     console.table(finalizedUser.transactions.map((t: Transaction) => ({
-        Time: new Date(t.timestamp).toLocaleTimeString(),
         Merchant: t.merchant,
         Amount: t.amount,
-        Status: t.status,
-        Reason: t.failureReason || "-"
+        Status: t.status
     })));
 }
+
+console.log("\n--- GLOBAL SYSTEM AUDIT (Including Unknowns) ---");
+console.table(db.getSystemLogs().map((t: Transaction) => ({
+    User: t.userId,
+    Card: t.cardId,
+    Merchant: t.merchant,
+    Status: t.status,
+    Reason: t.failureReason || "-"
+})));

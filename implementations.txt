@@ -14,7 +14,7 @@ Every attempt (Success or Decline) is logged in a persistent Audit Trail, allowi
 Reason Tracking: 
 Transactions now store a failureReason (e.g., MERCHANT_NOT_AUTHORIZED or CARD_BLOCKED) to help the user understand why a payment failed.
 Realistic Fintech Identity:
-Chas Bank BINS: 
+Chase Bank BINS: 
 Generated Visa cards now use the realistic Chase Bank prefix (414720) to look authentic to standard payment gateways.
 Vault Simulation: 
 Secure data handling by storing only the original_card_last4 and a vault_token for the real card.

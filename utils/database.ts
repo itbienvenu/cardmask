@@ -50,61 +50,85 @@
 ]
 */
 
-import type { User } from "../type.js";
-import fs from "node:fs";
-
+import type { User, Transaction } from "../type.js";
+import fs from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 class Database {
    private users: User[] = [];
-   private readonly dbPath = new URL('./database.json', import.meta.url).pathname;
+   private systemTransactions: Transaction[] = [];
+   private readonly dbPath = fileURLToPath(new URL("./database.json", import.meta.url));
+   private readonly logPath = fileURLToPath(new URL("./system_audit.json", import.meta.url));
 
    constructor() {
-      this.load();
+      // We can't use async in constructor, so we load initial state
+      // In a real app, you might have an 'init' method
+      this.loadSync();
    }
 
-   private load() {
+   private loadSync() {
       try {
-         if (fs.existsSync(this.dbPath)) {
-            const data = fs.readFileSync(this.dbPath, "utf-8");
+         if (existsSync(this.dbPath)) {
+            const data = readFileSync(this.dbPath, "utf-8");
             this.users = JSON.parse(data);
-         } else {
-            this.users = [];
+         }
+         if (existsSync(this.logPath)) {
+            const data = readFileSync(this.logPath, "utf-8");
+            this.systemTransactions = JSON.parse(data);
          }
       } catch (error) {
          console.error("Error loading database:", error);
-         this.users = [];
       }
    }
 
-   private save() {
+   private async save() {
       try {
-         fs.writeFileSync(this.dbPath, JSON.stringify(this.users, null, 2));
+         // Security: In a real app, we would encrypt 'users' before writing
+         await fs.writeFile(this.dbPath, JSON.stringify(this.users, null, 2));
       } catch (error) {
          console.error("Error saving database:", error);
       }
    }
 
-   addUser(user: User) {
+   private async saveLogs() {
+      try {
+         await fs.writeFile(this.logPath, JSON.stringify(this.systemTransactions, null, 2));
+      } catch (error) {
+         console.error("Error saving system logs:", error);
+      }
+   }
+
+   async addUser(user: User) {
       this.users.push(user);
-      this.save();
+      await this.save();
    }
 
    getUser(user_id: string) {
       return this.users.find(user => user.user_id === user_id);
    }
 
-   deleteUser(user_id: string) {
+   async deleteUser(user_id: string) {
       this.users = this.users.filter(user => user.user_id !== user_id);
-      this.save();
+      await this.save();
    }
 
-   updateUser(user_id: string, updatedUser: User) {
+   async updateUser(user_id: string, updatedUser: User) {
       this.users = this.users.map(user => user.user_id === user_id ? updatedUser : user);
-      this.save();
+      await this.save();
    }
 
    getAllUsers() {
       return this.users;
+   }
+
+   async logSystemTransaction(transaction: Transaction) {
+      this.systemTransactions.push(transaction);
+      await this.saveLogs();
+   }
+
+   getSystemLogs() {
+      return this.systemTransactions;
    }
 }
 
