@@ -1,0 +1,20 @@
+Key Professional Implementations:
+Strategic Masking Logic:
+Merchant Locking: 
+You can now create a card restricted to a specific merchant (e.g., "Netflix"). If used elsewhere, the transaction is instantly declined.
+Disposable Cards (ONE_TIME): 
+Cards that automatically block themselves after a single successful transaction, perfect for "shady" or unknown websites.
+Spending Limits: 
+Each mask card has its own "budget" (limit_amount) separate from the user's total balance.
+Professional Transaction Engine:
+Real-time Authorization: 
+The system now runs a 3-step check for every payment: Status (Active/Blocked), Limits (Available funds), and Merchant Permission.
+Integrated Log History: 
+Every attempt (Success or Decline) is logged in a persistent Audit Trail, allowing businesses to track suspicious activity.
+Reason Tracking: 
+Transactions now store a failureReason (e.g., MERCHANT_NOT_AUTHORIZED or CARD_BLOCKED) to help the user understand why a payment failed.
+Realistic Fintech Identity:
+Chas Bank BINS: 
+Generated Visa cards now use the realistic Chase Bank prefix (414720) to look authentic to standard payment gateways.
+Vault Simulation: 
+Secure data handling by storing only the original_card_last4 and a vault_token for the real card.

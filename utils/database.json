@@ -1,0 +1,90 @@
+[
+  {
+    "user_id": "cba44618-f5fb-4c1a-9d4c-31803c8712c4",
+    "names": "Prosper Nkurunziza",
+    "phone": "+250788000111",
+    "email": "prosper@fintech.rw",
+    "address": "KN 3 Rd, Kigali",
+    "original_card_last4": "8899",
+    "original_card_full_vault_token": "tok_visa_vault",
+    "total_balance": 500000,
+    "mask_cards": [
+      {
+        "id": "83b8308c-d789-420e-a330-39390b9f2ce8",
+        "pan": "4147200495607527",
+        "cvv": "188",
+        "expiryMonth": 6,
+        "expiryYear": 2029,
+        "status": "ACTIVE",
+        "type": "MERCHANT_LOCKED",
+        "limit_amount": 15000,
+        "spent_amount": 12000,
+        "use_cases": [
+          "Netflix"
+        ],
+        "createdAt": "2026-02-23T06:17:11.858Z"
+      },
+      {
+        "id": "d3bf01da-40ae-4842-b586-7f5bc38d4757",
+        "pan": "4147206142690857",
+        "cvv": "012",
+        "expiryMonth": 8,
+        "expiryYear": 2029,
+        "status": "BLOCKED",
+        "type": "ONE_TIME",
+        "limit_amount": 5000,
+        "spent_amount": 2000,
+        "use_cases": [
+          "ShadyStore"
+        ],
+        "createdAt": "2026-02-23T06:17:11.859Z"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "c4d41cea-3b49-47c8-a6e2-0919a42d61c7",
+        "userId": "cba44618-f5fb-4c1a-9d4c-31803c8712c4",
+        "cardId": "83b8308c-d789-420e-a330-39390b9f2ce8",
+        "amount": 12000,
+        "currency": "RWF",
+        "merchant": "Netflix.com / Dublin",
+        "status": "SUCCESS",
+        "timestamp": "2026-02-23T06:17:11.860Z",
+        "failureReason": null
+      },
+      {
+        "id": "83b0235b-30f0-401d-acd7-77cb89ca0f80",
+        "userId": "cba44618-f5fb-4c1a-9d4c-31803c8712c4",
+        "cardId": "83b8308c-d789-420e-a330-39390b9f2ce8",
+        "amount": 500,
+        "currency": "RWF",
+        "merchant": "Unknown_Hacker_Store",
+        "status": "DECLINED",
+        "timestamp": "2026-02-23T06:17:11.861Z",
+        "failureReason": "MERCHANT_NOT_AUTHORIZED"
+      },
+      {
+        "id": "bda5dc9b-6910-4ee9-846c-cc2b59f6dfb1",
+        "userId": "cba44618-f5fb-4c1a-9d4c-31803c8712c4",
+        "cardId": "d3bf01da-40ae-4842-b586-7f5bc38d4757",
+        "amount": 2000,
+        "currency": "RWF",
+        "merchant": "ShadyStore.com",
+        "status": "SUCCESS",
+        "timestamp": "2026-02-23T06:17:11.861Z",
+        "failureReason": null
+      },
+      {
+        "id": "abbf96cc-f3fe-43bd-b39d-ae6efc134b9a",
+        "userId": "cba44618-f5fb-4c1a-9d4c-31803c8712c4",
+        "cardId": "d3bf01da-40ae-4842-b586-7f5bc38d4757",
+        "amount": 1000,
+        "currency": "RWF",
+        "merchant": "ShadyStore.com",
+        "status": "DECLINED",
+        "timestamp": "2026-02-23T06:17:11.862Z",
+        "failureReason": "CARD_BLOCKED"
+      }
+    ]
+  }
+]
