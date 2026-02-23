@@ -1,5 +1,5 @@
 import type { CardResponse } from "../type.js";
-import { calculateLuhnCheckDigit, generateRandomFakeCVV } from "../utils.js";
+import { calculateLuhnCheckDigit, generateRandomFakeCVV } from "../utils/utils.js";
 
 export function generateAmexCardNumber(): CardResponse {
     let digits: number[] = [3, 4]

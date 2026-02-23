@@ -1,26 +1,21 @@
-import type { MOCK_CARD_PROVIDER, Card, CardMaskBodyResponse, CardProvider, CardBody, CardResponse } from "./type.js";
-import { generateVisaCardNumber } from "./PROVIDERS/visa";
-import { generateMasterCardNumber } from "./PROVIDERS/mastercard";
-import { generateAmexCardNumber } from "./PROVIDERS/amex";
+import CardMasker from "./CONTROLERS/CardMasker.js";
+import cardValidator from "card-validator";
+import creditCardType from "credit-card-type";
 
-export function generateCardNumber(provider: MOCK_CARD_PROVIDER): CardResponse {
-
-    if (provider === 'VISA') {
-        return generateVisaCardNumber()
-    }
-    if (provider === 'MASTERCARD') {
-        return generateMasterCardNumber()
-    }
-    if (provider === 'AMEX') {
-        return generateAmexCardNumber()
-
-    }
-    throw new Error('Provider not found')
-}
+const cardsMask = new CardMasker();
 
 
-// testing
+// testing for VISA cards
 
-console.log("VISA CARD NUMBER", generateCardNumber('VISA'))
-console.log("MASTERCARD NUMBER", generateCardNumber('MASTERCARD'))
-console.log("AMEX CARD NUMBER", generateCardNumber('AMEX'))
+const visaCards = cardsMask.generateVisaCards(5, 7);
+
+// const res = visaCards.forEach(card => cardValidator.number(card.pan))
+
+// console.log("Cards response is this one : ", visaCards);
+
+
+const res = cardValidator.number("41396995806864663");
+
+console.log(res.isValid)
+
+// console.log("Totak visacards geerated are: ", visaCards , "\n");

@@ -17,5 +17,14 @@
     "@types/node": "^25.0.10",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "dependencies": {
+    "card-validator": "^10.0.4",
+    "credit-card-type": "^10.1.2",
+    "esbuild": "^0.27.2",
+    "get-tsconfig": "^4.13.0",
+    "resolve-pkg-maps": "^1.0.0",
+    "undici-types": "^7.16.0"
+  },
+  "keywords": []
 }

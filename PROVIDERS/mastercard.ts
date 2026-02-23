@@ -1,7 +1,7 @@
 // logic for mastercard logic
 
 import type { CardResponse } from "../type.js";
-import { calculateLuhnCheckDigit, generateRandomFakeCVV } from "../utils.js";
+import { calculateLuhnCheckDigit, generateRandomFakeCVV } from "../utils/utils.js";
 
 
 export function generateMasterCardNumber(): CardResponse {
