@@ -1,4 +1,7 @@
 # Logs
+utils/database.json
+utils/system_audit.json
+utils/vault.json
 logs
 *.log
 npm-debug.log*
