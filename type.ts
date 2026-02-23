@@ -25,9 +25,10 @@ export interface MaskCard {
     expiryYear: number
     status: CardStatus
     type: MaskType
-    limit_amount: number
-    spent_amount: number
-    use_cases: string[] // Merchant names or categories
+    limitAmount: number
+    spentAmount: number
+    useCases: string[] // Merchant names or categories
+    fundingSourceId: string; // Linked funding source
     createdAt: string
 }
 
@@ -39,15 +40,21 @@ export type CardResponse = {
     expiryYear: number
 }
 
+export interface FundingSource {
+    id: string;
+    last4: string;
+    network: MOCK_CARD_PROVIDER;
+    availableBalance: number; // Simulated upstream bank balance
+    status: "LINKED" | "UNVERIFIED";
+}
+
 export type User = {
     user_id: string;
     names: string;
-    phone: string; // Changed to string for international formats
+    phone: string;
     email: string;
     address: string;
-    original_card_last4: string;
-    original_card_network: MOCK_CARD_PROVIDER;
-    total_balance: number;
+    funding_sources: FundingSource[];
     mask_cards: MaskCard[];
     transactions: Transaction[];
 }

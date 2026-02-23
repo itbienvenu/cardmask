@@ -1,7 +1,7 @@
 import CardMasker from "./CONTROLERS/CardMasker.js";
 import db from "./utils/database.js";
 import { v4 as uuidv4 } from "uuid";
-import type { User, Transaction } from "./type.js";
+import type { User, Transaction, FundingSource } from "./type.js";
 
 const cardsMask = new CardMasker();
 
@@ -12,34 +12,44 @@ async function runSimulation() {
     let user = db.getUser(DEMO_USER_ID);
 
     if (!user) {
+        const initialSource: FundingSource = {
+            id: uuidv4(),
+            last4: "8899",
+            network: "VISA",
+            availableBalance: 500000,
+            status: "LINKED"
+        };
+
         user = {
             user_id: DEMO_USER_ID,
             names: "Prosper Nkurunziza",
             phone: "+250788000111",
             email: "prosper@fintech.rw",
             address: "KN 3 Rd, Kigali",
-            original_card_last4: "8899",
-            original_card_network: "VISA",
-            total_balance: 500000, // RWF
+            funding_sources: [initialSource],
             mask_cards: [],
             transactions: []
         };
         await db.addUser(user);
-        // SECURE STORE: Storing sensitive token separately
         await db.storeVaultToken(user.user_id, "tok_visa_vault_secure");
         console.log("SUCCESS: Professional Account Provisioned for:", user.names);
     }
 
-    // Safety check for simulation flow
-    if (!user) return;
+    if (!user || user.funding_sources.length === 0) {
+        console.error("Simulation Error: User has no funding sources.");
+        return;
+    }
 
-    // 2. Business Use Case: Multi-Network Strategic Masks
-    console.log("\n--- PROVISIONING MULTI-NETWORK MASKS ---");
+    const firstSource = user.funding_sources[0];
+    if (!firstSource) return;
+    const sourceId = firstSource.id;
+
+    console.log("\n--- PROVISIONING SUBSCRIPTION SHIELDS ---");
     const netflixMask = await cardsMask.maskUserCard(
         user.user_id,
         "MERCHANT_LOCKED",
         15000,
-        "8899",
+        sourceId,
         ["Netflix"]
     );
 
@@ -47,7 +57,7 @@ async function runSimulation() {
         user.user_id,
         "RECURRING",
         100000,
-        "8899",
+        sourceId,
         ["Travel", "AirRwanda"],
         "AMEX"
     );
