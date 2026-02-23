@@ -1,5 +1,6 @@
-export function generateRandomFakeCVV(): string {
-    return Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+export function generateRandomFakeCVV(length: number = 3): string {
+    const max = Math.pow(10, length);
+    return Math.floor(Math.random() * max).toString().padStart(length, '0');
 }
 
 export function calculateLuhnCheckDigit(partialDigits: number[]): number {

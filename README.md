@@ -7,7 +7,7 @@ installation
 
 
 
-intall npm packages
+install npm packages
 
 ``` npm install ```
 

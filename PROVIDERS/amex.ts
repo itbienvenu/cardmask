@@ -16,7 +16,7 @@ export function generateAmexCardNumber(): CardResponse {
     return {
         type: 'AMEX',
         pan: digits.join(''),
-        cvv: generateRandomFakeCVV().substring(0, 4).padStart(4, '0'), // Amex CVV is 4 digits
+        cvv: generateRandomFakeCVV(4), // Amex CVV is 4 digits
         expiryMonth: Math.floor(Math.random() * 12) + 1,
         expiryYear: 2029
     }

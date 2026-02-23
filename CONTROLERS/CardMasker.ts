@@ -16,14 +16,14 @@ import { v4 as uuidv4 } from "uuid";
 
 class CardMasker {
 
-    maskUserCard(
+    async maskUserCard(
         user_id: string,
         type: MaskType,
         limit: number,
         originalCardLast4: string,
         useCases: string[] = ["general"],
         network?: MOCK_CARD_PROVIDER
-    ): MaskCard | null {
+    ): Promise<MaskCard | null> {
         const user = db.getUser(user_id);
         if (!user) return null;
 
@@ -51,7 +51,7 @@ class CardMasker {
         };
 
         user.mask_cards.push(mask);
-        db.updateUser(user_id, user);
+        await db.updateUser(user_id, user);
         return mask;
     }
 
@@ -76,18 +76,18 @@ class CardMasker {
         userId?: string;
         maskId?: string
     } {
-        const users = db.getAllUsers();
-        let foundUser: User | null = null;
-        let foundMask: MaskCard | null = null;
-
-        for (const user of users) {
-            const mask = user.mask_cards.find(m => m.pan === maskPan);
-            if (mask) {
-                foundUser = user;
-                foundMask = mask;
-                break;
-            }
+        // Validation: Reject negative, zero, NaN, or non-finite amounts
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return { approved: false, reason: "INVALID_AMOUNT" };
         }
+
+        const lookup = db.lookupByPan(maskPan);
+        if (!lookup) {
+            return { approved: false, reason: "CARD_NOT_FOUND" };
+        }
+
+        const foundUser = lookup.user;
+        const foundMask = lookup.mask;
 
         if (!foundUser || !foundMask) {
             return { approved: false, reason: "CARD_NOT_FOUND" };
@@ -98,9 +98,14 @@ class CardMasker {
             return { approved: false, reason: `CARD_${foundMask.status}`, userId: foundUser.user_id, maskId: foundMask.id };
         }
 
-        // 2. Check Limits
+        // 2. Check Limits & Funds
+        // Both the individual card limit AND the user's total wallet balance must be sufficient.
         if (foundMask.spent_amount + amount > foundMask.limit_amount) {
             return { approved: false, reason: "INSUFFICIENT_LIMIT", userId: foundUser.user_id, maskId: foundMask.id };
+        }
+
+        if (foundUser.total_balance < amount) {
+            return { approved: false, reason: "INSUFFICIENT_FUNDS", userId: foundUser.user_id, maskId: foundMask.id };
         }
 
         // 3. Check Merchant Locking
@@ -119,7 +124,25 @@ class CardMasker {
     /**
      * Finalize and log a transaction
      */
-    processTransaction(maskPan: string, amount: number, merchant: string): Transaction {
+    async processTransaction(maskPan: string, amount: number, merchant: string): Promise<Transaction> {
+        // Validation: Fail early for invalid amounts
+        if (!Number.isFinite(amount) || amount <= 0) {
+            const txId = uuidv4();
+            const transaction: Transaction = {
+                id: txId,
+                userId: "UNKNOWN",
+                cardId: "UNKNOWN",
+                amount,
+                currency: "RWF",
+                merchant,
+                status: "DECLINED",
+                timestamp: new Date().toISOString(),
+                failureReason: "INVALID_AMOUNT"
+            };
+            await db.logSystemTransaction(transaction);
+            return transaction;
+        }
+
         const auth = this.authorizePayment(maskPan, amount, merchant);
         const timestamp = new Date().toISOString();
         const txId = uuidv4();
@@ -136,23 +159,36 @@ class CardMasker {
             failureReason: auth.reason ?? null
         };
 
-        // Global System Audit
-        db.logSystemTransaction(transaction);
-
         if (auth.userId) {
             const user = db.getUser(auth.userId);
             if (user) {
                 if (auth.approved && auth.maskId) {
                     const mask = user.mask_cards.find(m => m.id === auth.maskId);
-                    if (mask) {
+
+                    // TOCTOU Protection: Re-verify state after fetching user but before mutation
+                    if (!mask || mask.status !== "ACTIVE") {
+                        transaction.status = "DECLINED";
+                        transaction.failureReason = "CARD_STATE_CHANGED";
+                    } else if (mask.spent_amount + amount > mask.limit_amount) {
+                        transaction.status = "DECLINED";
+                        transaction.failureReason = "INSUFFICIENT_LIMIT";
+                    } else if (user.total_balance < amount) {
+                        transaction.status = "DECLINED";
+                        transaction.failureReason = "INSUFFICIENT_FUNDS";
+                    } else {
+                        // Deduct from wallet and track card spending
+                        user.total_balance -= amount;
                         mask.spent_amount += amount;
                         if (mask.type === "ONE_TIME") mask.status = "BLOCKED";
                     }
                 }
                 user.transactions.push(transaction);
-                db.updateUser(user.user_id, user);
+                await db.updateUser(user.user_id, user);
             }
         }
+
+        // Log to system audit after transaction is finalized
+        await db.logSystemTransaction(transaction);
 
         return transaction;
     }
@@ -163,12 +199,9 @@ class CardMasker {
             return { isValid: false, message: "Invalid card format" };
         }
 
-        const users = db.getAllUsers();
-        for (const user of users) {
-            const mask = user.mask_cards.find(m => m.pan === cardNumber);
-            if (mask) {
-                return { isValid: true, message: "Valid Mask Card", user, mask };
-            }
+        const lookup = db.lookupByPan(cardNumber);
+        if (lookup) {
+            return { isValid: true, message: "Valid Mask Card", user: lookup.user, mask: lookup.mask };
         }
 
         return { isValid: false, message: "Card not recognized by CardMask Network" };

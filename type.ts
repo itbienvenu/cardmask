@@ -47,8 +47,17 @@ export type User = {
     address: string;
     original_card_last4: string;
     original_card_network: MOCK_CARD_PROVIDER;
-    original_card_full_vault_token: string;
     total_balance: number;
     mask_cards: MaskCard[];
     transactions: Transaction[];
+}
+
+/**
+ * SECURE STORE MODEL: 
+ * Handles sensitive tokens separately from the user profile.
+ * TODO: In production, this should be stored in an HSM or encrypted-at-rest database.
+ */
+export interface VaultEntry {
+    userId: string;
+    vaultToken: string;
 }
