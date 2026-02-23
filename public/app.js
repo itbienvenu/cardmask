@@ -86,7 +86,10 @@ function renderUsers(users) {
                                 <span class="status ${mask.status.toLowerCase()}"></span>
                                 <span title="${mask.type}">${mask.pan.replace(/(.{4})/g, '$1 ')}</span>
                             </div>
-                            <button class="btn-primary btn-tiny" onclick="openPayModal('${mask.pan}')">Pay</button>
+                            ${mask.status === 'ACTIVE'
+                                ? `<button class="btn-primary btn-tiny" onclick="openPayModal('${mask.pan}')">Pay</button>`
+                                : `<button class="btn-primary btn-tiny" disabled title="Payments can only be initiated for ACTIVE shields">Pay</button>`
+                            }
                         </div>
                     `).join('')}
                     ${user.mask_cards.length === 0 ? '<p style="color:var(--text-secondary);font-size:0.8rem">No subscription shields active.</p>' : ''}
