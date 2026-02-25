@@ -58,7 +58,6 @@ class CardMasker {
             case 'VISA':
                 return generateVisaCardNumber();
             default:
-                // Detect unknown network values and throw/log error
                 console.error(`Unsupported card network: ${network}`);
                 throw new Error(`Unsupported card network: ${network}`);
         }
@@ -86,28 +85,23 @@ class CardMasker {
         const foundUser = lookup.user;
         const foundMask = lookup.mask;
 
-        // Missing null-check guard for user/mask
         if (!foundUser || !foundMask) {
             return { approved: false, reason: "CARD_NOT_FOUND" };
         }
 
-        // 1. Check Mask Status
         if (foundMask.status !== "ACTIVE") {
             return { approved: false, reason: `CARD_${foundMask.status}`, userId: foundUser.user_id, maskId: foundMask.id };
         }
 
-        // 2. Check Virtual Card Limits
         if (foundMask.spentAmount + amount > foundMask.limitAmount) {
             return { approved: false, reason: "INSUFFICIENT_LIMIT", userId: foundUser.user_id, maskId: foundMask.id };
         }
 
-        // 3. Middle Man Check: Verify Funding Source (Real Bank Account)
         const source = foundUser.funding_sources.find(s => s.id === foundMask.fundingSourceId);
         if (!source || source.availableBalance < amount) {
             return { approved: false, reason: "INSUFFICIENT_FUNDS_AT_SOURCE", userId: foundUser.user_id, maskId: foundMask.id };
         }
 
-        // 4. Check Merchant Locking
         if (foundMask.type === "MERCHANT_LOCKED") {
             const isAllowed = foundMask.useCases.some(u =>
                 merchant.toLowerCase().includes(u.toLowerCase())
