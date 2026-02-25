@@ -11,6 +11,13 @@ async function runSimulation() {
     const DEMO_USER_ID = "d9caf830-8625-414c-bfc0-3edbc5a5bc75";
     let user = db.getUser(DEMO_USER_ID);
 
+    // If user exists but has legacy schema (missing funding_sources), reset them for simulation
+    if (user && !user.funding_sources) {
+        await db.deleteUser(DEMO_USER_ID);
+        // We set to undefined so the provisioning block below runs
+        user = undefined as any;
+    }
+
     if (!user) {
         const initialSource: FundingSource = {
             id: uuidv4(),

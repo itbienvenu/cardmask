@@ -18,3 +18,31 @@ Chase Bank BINS:
 Generated Visa cards now use the realistic Chase Bank prefix (414720) to look authentic to standard payment gateways.
 Vault Simulation: 
 Secure data handling by storing only the original_card_last4 and a vault_token for the real card.
+
+
+
+
+
+
+PART ONE, MOVING FROM BUILDIN AN ENTIRE WALLET, TO MIDDLEMAN LOGIC
+
+
+Perfect choice. Moving as a Middle Man is significantly more scalable and carries much less regulatory risk. We will position the app as a "Subscription Firewall" for businesses.
+
+Here is exactly what I am going to do to upgrade the system to this model:
+
+1. Update the Data Model (
+type.ts
+)
+I will replace the "Internal Wallet" concept with a FundingSource.
+This represents the real bank account or credit card that is "behind" the mask.
+2. Upgrade the Transaction Engine (
+CardMasker.ts
+)
+The "Fund Check": Before approving a payment, the system will now perform two checks:
+Rule Check: (Does it pass the Merchant Lock and Virtual Card limit?)
+Upstream Check: (Does the linked "Real Card" have enough money?)
+Automatic Top-up Logic: We will simulate the "Pull" from the real bank account.
+3. Business-Specific Controls
+I will add "Subscription Guard" logic. For example, if a business only wants to spend $50/month on AWS, the card will automatically "Reset" its limit every month but never allow an overage.
+4. UI Transformation
