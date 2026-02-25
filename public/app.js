@@ -274,10 +274,19 @@ function renderLogs(logs) {
 // Action Handlers
 regForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // In a real app, file uploads should be sent via FormData (multipart/form-data).
+    // For this simulation, we'll just capture the file names to simulate a successful attachment.
+    const frontIdFile = document.getElementById('reg-id-front').files[0];
+    const backIdFile = document.getElementById('reg-id-back').files[0];
+
     const data = {
         names: document.getElementById('reg-name').value,
         email: document.getElementById('reg-email').value,
         phone: document.getElementById('reg-phone').value,
+        dob: document.getElementById('reg-dob').value,
+        idDocumentFrontName: frontIdFile ? frontIdFile.name : null,
+        idDocumentBackName: backIdFile ? backIdFile.name : null,
         originalCardLast4: document.getElementById('reg-card').value,
         network: document.getElementById('reg-network').value
     };

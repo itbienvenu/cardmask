@@ -6,7 +6,7 @@ git clone git@github.com:itbienvenu/cardmask.git
 ```
 
 ``` bash
-cd carddmask
+cd cardmask
 ```
 
 
@@ -30,7 +30,7 @@ CURRENT STATUS
 
 ## TO START THE DEVELOPMENT SERVER
 
-Run the Web Application (Dashboard Mode) This starts the backend API and the frontend dashboard.
+Run the Web Application (Dashboard Mode). This starts the backend API and the frontend dashboard.
 
 ``` bash
 npm run dev

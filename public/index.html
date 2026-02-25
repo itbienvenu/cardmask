@@ -62,19 +62,41 @@
         <!-- Modals -->
         <div id="register-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reg-title">
             <div class="modal-content">
-                <h3 id="reg-title">Register New User</h3>
+                <h3 id="reg-title">Register New User <span style="font-size: 0.6em; color: gray;">(KYC Required)</span>
+                </h3>
                 <form id="register-form">
-                    <input type="text" id="reg-name" placeholder="Full Name" required>
-                    <input type="email" id="reg-email" placeholder="Email Address" required>
-                    <input type="text" id="reg-phone" placeholder="Phone Number">
-                    <div class="form-row">
-                        <input type="text" id="reg-card" placeholder="Last 4 Digits" maxlength="4" required>
-                        <select id="reg-network" aria-label="Card Network">
-                            <option value="VISA">VISA</option>
-                            <option value="MASTERCARD">MASTERCARD</option>
-                            <option value="AMEX">AMEX</option>
-                        </select>
-                    </div>
+                    <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                        <legend style="font-size: 0.8em; font-weight: bold;">Step 1: Personal Info</legend>
+                        <input type="text" id="reg-name" placeholder="Full Legal Name" required>
+                        <input type="email" id="reg-email" placeholder="Email Address" required>
+                        <input type="text" id="reg-phone" placeholder="Phone Number" required>
+                    </fieldset>
+
+                    <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                        <legend style="font-size: 0.8em; font-weight: bold;">Step 2: Identity Verification</legend>
+                        <label for="reg-dob" style="font-size: 0.8em;">Date of Birth</label>
+                        <input type="date" id="reg-dob" required style="margin-bottom: 10px; width: 100%;">
+
+                        <label for="reg-id-front" style="font-size: 0.8em;">Upload ID (Front)</label>
+                        <input type="file" id="reg-id-front" accept="image/png, image/jpeg" required
+                            style="margin-bottom: 10px;">
+
+                        <label for="reg-id-back" style="font-size: 0.8em;">Upload ID (Back)</label>
+                        <input type="file" id="reg-id-back" accept="image/png, image/jpeg" required>
+                    </fieldset>
+
+                    <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                        <legend style="font-size: 0.8em; font-weight: bold;">Step 3: Link Funding Source</legend>
+                        <div class="form-row">
+                            <input type="text" id="reg-card" placeholder="Last 4 Digits" maxlength="4" required>
+                            <select id="reg-network" aria-label="Card Network">
+                                <option value="VISA">VISA</option>
+                                <option value="MASTERCARD">MASTERCARD</option>
+                                <option value="AMEX">AMEX</option>
+                            </select>
+                        </div>
+                    </fieldset>
+
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary close-modal">Cancel</button>
                         <button type="submit" class="btn-primary">Register Account</button>

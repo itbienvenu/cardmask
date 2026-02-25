@@ -24,7 +24,7 @@ Secure data handling by storing only the original_card_last4 and a vault_token f
 
 
 
-PART ONE, MOVING FROM BUILDIN AN ENTIRE WALLET, TO MIDDLEMAN LOGIC
+PART ONE, MOVING FROM BUILDING AN ENTIRE WALLET, TO MIDDLEMAN LOGIC
 
 
 Perfect choice. Moving as a Middle Man is significantly more scalable and carries much less regulatory risk. We will position the app as a "Subscription Firewall" for businesses.
